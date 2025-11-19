@@ -16,6 +16,12 @@ export default function PlaylistDetailPage() {
 	useEffect(() => { document.title = `Playlist ${id ?? ''}`; }, [id]);
 
 	useEffect(() => {
+		if (playlist?.name) {
+			document.title = playlist.name;
+		}
+	}, [playlist]);
+
+	useEffect(() => {
 		if (!token || !id) return;
 
 		fetchPlaylistById(token, id)
@@ -43,10 +49,28 @@ export default function PlaylistDetailPage() {
 			{loading && <div>Loading playlist…</div>}
 			{error && !loading && <div role="alert">{error}</div>}
 			{!loading && !error && playlist && (
-				<div>
-					<h2>{playlist.name}</h2>
-					<p>Owner: {playlist.owner?.display_name}</p>
-					<p>Tracks: {playlist.tracks?.total}</p>
+				<div className="playlist-detail">
+					<div className="playlist-header">
+						{playlist.images?.[0]?.url && (
+							<img
+								src={playlist.images[0].url}
+								alt={playlist.name || 'Playlist cover'}
+								className="playlist-cover"
+							/>
+						)}
+						<div className="playlist-meta">
+							<h2 className="playlist-title">{playlist.name}</h2>
+							{playlist.description && (
+								<p className="playlist-description">{playlist.description}</p>
+							)}
+							<p className="playlist-owner">Owner: {playlist.owner?.display_name}</p>
+							<p className="playlist-tracks">Tracks: {playlist.tracks?.total}</p>
+							{playlist.external_urls?.spotify && (
+								<p className="playlist-link"><a href={playlist.external_urls.spotify} target="_blank" rel="noopener noreferrer">Open in Spotify</a></p>
+							)}
+						</div>
+					</div>
+					{/* Additional playlist content (tracks, etc.) can be rendered below */}
 				</div>
 			)}
 			{!loading && !error && !playlist && <div>No playlist data.</div>}
