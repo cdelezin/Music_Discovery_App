@@ -140,7 +140,7 @@ describe("artistCountForPlaylist", () => {
 
   test("aggregates counts across playlists and continues on errors", async () => {
     // p1 -> returns two tracks (A x1, B x2)
-    fetchPlaylistById.mockImplementationOnce(async (token, id) => ({
+    fetchPlaylistById.mockImplementationOnce(async () => ({
       data: makePlaylist([
         { name: "s1", artists: ["A"] },
         { name: "s2", artists: ["B", "B"] },
