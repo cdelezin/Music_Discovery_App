@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useRequireToken } from '../../hooks/useRequireToken.js';
 import { fetchPlaylistById } from '../../api/spotify-playlists.js';
 import { handleTokenError } from '../../utils/handleTokenError.js';
+import TrackItem from '../../components/TrackItem/TrackItem.jsx';
 
 export default function PlaylistDetailPage() {
 	const { id } = useParams();
@@ -70,7 +71,28 @@ export default function PlaylistDetailPage() {
 							)}
 						</div>
 					</div>
-					{/* Additional playlist content (tracks, etc.) can be rendered below */}
+
+					{/* Tracks list */}
+					<div className="playlist-tracks-list">
+						<h3 className="tracks-title">Tracks</h3>
+						{playlist.tracks?.items?.length ? (
+							<ol className="track-list">
+								{playlist.tracks.items
+									.filter(item => item?.track) // some items may be null (local/removed)
+									.map((item, idx) => {
+										const track = item.track;
+										const key = track.id ?? `local-${idx}`;
+										return (
+											<li key={key} className="track-list-item">
+												<TrackItem track={track} index={idx + 1} />
+											</li>
+										);
+									})}
+							</ol>
+						) : (
+							<p className="no-tracks">No tracks available.</p>
+						)}
+					</div>
 				</div>
 			)}
 			{!loading && !error && !playlist && <div>No playlist data.</div>}
