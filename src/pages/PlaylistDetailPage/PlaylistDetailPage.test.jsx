@@ -1,13 +1,13 @@
 // src/pages/PlaylistsPage.test.jsx
 
-import { describe, expect, test } from '@jest/globals';
+import { describe, expect, test, beforeEach, afterEach, jest } from '@jest/globals';
 import '@testing-library/jest-dom';
 import { render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
 // mock the spotify API module to avoid import timing issues
 jest.mock('../../api/spotify-playlists.js', () => ({ fetchPlaylistById: jest.fn() }));
 const spotifyApi = require('../../api/spotify-playlists.js');
-import { beforeEach, afterEach, jest } from '@jest/globals';
+
 import { KEY_ACCESS_TOKEN } from '../../constants/storageKeys.js';
 // removed static import of PlaylistDetailPage
 
