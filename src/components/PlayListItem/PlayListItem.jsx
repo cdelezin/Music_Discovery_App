@@ -1,6 +1,5 @@
 import './PlayListItem.css';
 import '../ListItem.css';
-import { Link } from 'react-router-dom';
 
 /**
  * Playlist item component
@@ -22,12 +21,14 @@ export default function PlayListItem({ playlist }) {
         </div>
         <div className="playlist-item-tracks">{playlist.tracks.total} tracks</div>
       </div>
-      <Link
-        to={`/playlist/${playlist.id}`}
+      <a
+        href={playlist.external_urls.spotify}
+        target="_blank"
+        rel="noopener noreferrer"
         className="playlist-link"
       >
         Open
-      </Link>
+      </a>
     </li>
   );
 }
