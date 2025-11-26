@@ -8,7 +8,7 @@ export default function DashboardPage() {
   useEffect(() => {
     const token = typeof window !== 'undefined' ? localStorage.getItem('spotify_access_token') : null;
     if (!token) {
-      console.warn('Token Spotify introuvable. Connectez-vous pour récupérer les top artists.');
+      console.warn('Token Spotify introuvable. Connectez-vous pour récupérer les top artists et top tracks.');
       return;
     }
 
@@ -28,10 +28,28 @@ export default function DashboardPage() {
       }
     }
 
+    // Nouveau : récupère les top tracks et renvoie l'objet JSON
+    async function fetchUserTopTracks(limit = 20) {
+      try {
+        const res = await fetch(`https://api.spotify.com/v1/me/top/tracks?limit=${limit}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (!res.ok) {
+          const text = await res.text();
+          throw new Error(`Spotify API error ${res.status}: ${text}`);
+        }
+        return await res.json();
+      } catch (err) {
+        console.error('fetchUserTopTracks erreur:', err);
+        return null;
+      }
+    }
+
     (async () => {
       try {
         setLoading(true);
         setError(null);
+
         const topArtists = await fetchUserTopArtists(10);
         console.log('topArtists (raw):', topArtists);
         if (topArtists && Array.isArray(topArtists.items) && topArtists.items.length > 0) {
@@ -41,8 +59,18 @@ export default function DashboardPage() {
           console.log('Aucun artiste top retourné.');
           setTopArtist(null);
         }
+
+        // Appel aux top tracks et logs pour vérification
+        const topTracks = await fetchUserTopTracks(10);
+        console.log('topTracks (raw):', topTracks);
+        if (topTracks && Array.isArray(topTracks.items) && topTracks.items.length > 0) {
+          console.log('Première piste:', topTracks.items[0]);
+          // si vous voulez stocker la piste dans l'état : setTopTrack(topTracks.items[0]);
+        } else {
+          console.log('Aucune piste top retournée.');
+        }
       } catch (err) {
-        setError(err?.message || 'Erreur lors de la récupération des top artists.');
+        setError(err?.message || 'Erreur lors de la récupération des données Spotify.');
       } finally {
         setLoading(false);
       }
