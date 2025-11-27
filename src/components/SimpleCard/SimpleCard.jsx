@@ -1,39 +1,43 @@
 import React from 'react';
 import './SimpleCard.css';
+import PropTypes from 'prop-types';
 
 /**
  * SimpleCard component displays a card with an image, title, subtitle, and a link.
  * @param {*} params - Props containing imageUrl, title, subtitle, and link.
  * @returns {JSX.Element} The rendered SimpleCard component.
  */
-const SimpleCard = ({ imageUrl, title, subtitle, linkUrl, linkText = 'Ouvrir sur Spotify', size = 120 }) => {
+const SimpleCard = ({ imageUrl, title, subtitle, link, linkUrl, size = 120 }) => {
+  // prefer `link` (used by tests) but accept `linkUrl` as well
+  const href = link || linkUrl || '#';
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 16 }} className="simple-card">
-      {imageUrl ? (
-        <img
-          src={imageUrl}
-          alt={title}
-          style={{ width: size, height: size, objectFit: 'cover', borderRadius: 8 }}
-          className="simple-card__image"
-        />
-      ) : (
-        <div style={{ width: size, height: size, background: '#eee', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          Pas d'image
-        </div>
-      )}
-      <div>
-        <div style={{ fontSize: 18, fontWeight: 700 }} className="simple-card__title">{title}</div>
-        {subtitle && <div style={{ color: '#666', marginTop: 6 }} data-testid="subtitle" className="simple-card__subtitle">{subtitle}</div>}
-        {linkUrl && (
-          <div style={{ marginTop: 8 }}>
-            <a data-testid="link" href={linkUrl} target="_blank" rel="noreferrer" className="simple-card__button">
-              {linkText}
-            </a>
-          </div>
-        )}
+    <a href={href} data-testid="link" className="simple-card">
+      <img
+        src={imageUrl}
+        alt={title}
+        style={{ width: size, height: size, objectFit: 'cover', borderRadius: 8 }}
+        className="simple-card__image"
+      />
+      <div className="simple-card__body">
+        <h3 className="simple-card__title">{title}</h3>
+        {subtitle && <p data-testid="subtitle" className="simple-card__subtitle">{subtitle}</p>}
       </div>
-    </div>
+    </a>
   );
+};
+
+SimpleCard.propTypes = {
+  imageUrl: PropTypes.string.isRequired,
+  title: PropTypes.string.isRequired,
+  subtitle: PropTypes.string,
+  link: PropTypes.string,
+  linkUrl: PropTypes.string
+};
+
+SimpleCard.defaultProps = {
+  subtitle: '',
+  link: '#',
+  linkUrl: undefined
 };
 
 export default SimpleCard;
