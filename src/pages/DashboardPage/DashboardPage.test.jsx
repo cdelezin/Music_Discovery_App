@@ -111,6 +111,9 @@ describe('DashboardPage', () => {
 	});
 
 	test('displays error when artist fetch returns non-ok', async () => {
+		// Spy console.error to ensure catch branch lines are executed
+		const errorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+
 		// Mock fetch: artists returns 500, tracks ok
 		globalThis.fetch = jest.fn((url) => {
 			if (url.includes('/me/top/artists')) {
@@ -130,13 +133,18 @@ describe('DashboardPage', () => {
 		expect(errs[0]).toHaveTextContent(/spotify api error 500/i);
 
 		// Tracks fallback: the component may not render tracks when there's a global error.
-		// Accept either the track/fallback is rendered, or the error alert is present.
 		const maybeTrack = screen.queryByText((text) => /Top Track|Aucune piste disponible/i.test(text));
-		// assert that either the track (or its fallback) is present OR an error alert is present
 		expect(!!maybeTrack || errs.length > 0).toBeTruthy();
+
+		// ensure console.error in fetchUserTopArtists was called
+		expect(errorSpy).toHaveBeenCalled();
+		errorSpy.mockRestore();
 	});
 
 	test('displays error on fetch exceptions', async () => {
+		// Spy console.error to hit the fetchUserTopTracks catch logging
+		const errorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+
 		// Mock fetch to throw network error
 		globalThis.fetch = jest.fn(() => Promise.reject(new Error('Network error for artists and tracks')));
 
@@ -145,9 +153,15 @@ describe('DashboardPage', () => {
 		const errs = await screen.findAllByTestId('dashboard-error');
 		expect(errs.length).toBeGreaterThan(0);
 		expect(errs[0]).toHaveTextContent(/network error/i);
+
+		expect(errorSpy).toHaveBeenCalled();
+		errorSpy.mockRestore();
 	});
 
 	test('shows token-expired error when API returns 401 message', async () => {
+		// Spy console.error to ensure token error path logs
+		const errorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+
 		// Mock fetch: artists return 401 with token expired message
 		globalThis.fetch = jest.fn((url) => {
 			if (url.includes('/me/top/artists')) {
@@ -164,5 +178,50 @@ describe('DashboardPage', () => {
 		const errs = await screen.findAllByTestId('dashboard-error');
 		expect(errs.length).toBeGreaterThan(0);
 		expect(errs[0]).toHaveTextContent(/the access token expired/i);
+
+		expect(errorSpy).toHaveBeenCalled();
+		errorSpy.mockRestore();
+	});
+
+	test('renders fallback when no token is present in localStorage', async () => {
+		// restore previous spies/mocks to ensure clean override
+		jest.restoreAllMocks();
+
+		// Override localStorage to simulate missing token
+		jest.spyOn(Storage.prototype, 'getItem').mockImplementation(() => null);
+		const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+
+		// Ensure fetch would throw if called (we expect it NOT to be called)
+		globalThis.fetch = jest.fn(() => Promise.reject(new Error('Should not be called')));
+
+		renderDashboardPage();
+
+		// console.warn should have been invoked and fetch must not be called
+		expect(warnSpy).toHaveBeenCalled();
+		expect(globalThis.fetch).not.toHaveBeenCalled();
+
+		// fallback messages for artist & track should be present
+		expect(await screen.findByText(/Aucun artiste disponible pour le moment/i)).toBeInTheDocument();
+		expect(await screen.findByText(/Aucune piste disponible pour le moment/i)).toBeInTheDocument();
+
+		warnSpy.mockRestore();
+	});
+
+	// New: explicit case where tracks response exists but has no "items" prop
+	test('handles tracks response missing items by showing fallback', async () => {
+		// artists ok, tracks response object without items
+		globalThis.fetch = jest.fn((url) => {
+			if (url.includes('/me/top/artists')) return makeFetchResponse(true, 200, topArtistData);
+			if (url.includes('/me/top/tracks')) return makeFetchResponse(true, 200, { total: 0 }); // no items
+			return makeFetchResponse(false, 404, 'Not Found');
+		});
+
+		renderDashboardPage();
+
+		// artist should render
+		expect(await screen.findByText(topArtistData.items[0].name)).toBeInTheDocument();
+
+		// tracks fallback should be shown
+		expect(await screen.findByText(/Aucune piste disponible pour le moment/i)).toBeInTheDocument();
 	});
 });
