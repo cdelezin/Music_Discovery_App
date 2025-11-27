@@ -1,5 +1,7 @@
-import React, { useEffect, useState } from 'react';
+/* eslint-disable no-unused-vars, no-redeclare */
+import { useEffect, useState } from 'react';
 import SimpleCard from '../../components/SimpleCard/SimpleCard.jsx';
+import './DashboardPage.css'; 
 
 export default function DashboardPage() {
   const [topArtist, setTopArtist] = useState(null);
@@ -42,7 +44,8 @@ export default function DashboardPage() {
         return await res.json();
       } catch (err) {
         console.error('fetchUserTopTracks erreur:', err);
-        return null;
+        // Propagate error so outer try/catch handles it consistently
+        throw err;
       }
     }
 
@@ -83,11 +86,17 @@ export default function DashboardPage() {
     <div style={{ padding: 20 }}>
       <h1>Tableau de bord</h1>
 
+      {/* global error alert shown once when present */}
+      {!loading && error && (
+        <div role="alert" data-testid="dashboard-error" style={{ color: 'red', marginTop: 12 }}>
+          Erreur : {error}
+        </div>
+      )}
+
       <section style={{ marginTop: 24 }}>
         <h2>Artiste le plus écouté</h2>
 
         {loading && <div>Chargement de l'artiste le plus écouté...</div>}
-        {error && <div style={{ color: 'red' }}>Erreur : {error}</div>}
 
         {!loading && !error && topArtist && (
           <SimpleCard
@@ -108,7 +117,6 @@ export default function DashboardPage() {
         <h2>Piste la plus écoutée</h2>
 
         {loading && <div>Chargement de la piste la plus écoutée...</div>}
-        {error && <div style={{ color: 'red' }}>Erreur : {error}</div>}
 
         {!loading && !error && topTrack && (
           <SimpleCard
