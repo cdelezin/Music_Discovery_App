@@ -12,7 +12,7 @@ describe('SimpleCard component', () => {
             imageUrl: 'https://via.placeholder.com/150',
             title: 'Test Title',
             subtitle: 'Test Subtitle',
-            link: 'https://example.com'
+            linkUrl: 'https://example.com'
         };
 
         // Act
@@ -22,6 +22,6 @@ describe('SimpleCard component', () => {
         expect(screen.getByAltText('Test Title')).toHaveAttribute('src', props.imageUrl);
         expect(screen.getByText('Test Title')).toBeInTheDocument();
         expect(screen.getByTestId('subtitle')).toHaveTextContent('Test Subtitle');
-        expect(screen.getByTestId('link')).toHaveAttribute('href', props.link);
+        expect(screen.getByTestId('link')).toHaveAttribute('href', props.linkUrl);
     });
 });
