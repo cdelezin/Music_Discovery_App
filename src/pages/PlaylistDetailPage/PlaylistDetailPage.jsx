@@ -4,6 +4,7 @@ import { useRequireToken } from '../../hooks/useRequireToken.js';
 import { fetchPlaylistById } from '../../api/spotify-playlists.js';
 import { handleTokenError } from '../../utils/handleTokenError.js';
 import TrackItem from '../../components/TrackItem/TrackItem.jsx';
+import './PlaylistDetailPage.css'; 
 
 export default function PlaylistDetailPage() {
 	const { id } = useParams();
@@ -28,7 +29,18 @@ export default function PlaylistDetailPage() {
 		fetchPlaylistById(token, id)
 			.then(res => {
 				if (res.error) {
-					if (!handleTokenError(res.error, navigate)) {
+					// try centralized handler first
+					const handled = handleTokenError(res.error, navigate);
+
+					// fallback: if handler didn't indicate it handled the error,
+					// check for common token/expiration keywords and redirect to /login
+					if (!handled) {
+						const errText = String(res.error || '').toLowerCase();
+						const looksLikeAuthError = /token|expired|unauthorized|401|access token/i.test(errText);
+						if (looksLikeAuthError) {
+							navigate('/login');
+							return;
+						}
 						setError(res.error);
 					}
 					return;

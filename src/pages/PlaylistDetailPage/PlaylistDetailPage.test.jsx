@@ -6,7 +6,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
 // mock the spotify API module to avoid import timing issues
 jest.mock('../../api/spotify-playlists.js', () => ({ fetchPlaylistById: jest.fn() }));
-const spotifyApi = require('../../api/spotify-playlists.js');
+const spotifyApi = jest.requireMock('../../api/spotify-playlists.js');
 
 import { KEY_ACCESS_TOKEN } from '../../constants/storageKeys.js';
 // removed static import of PlaylistDetailPage
@@ -50,8 +50,8 @@ describe('PlaylistPage', () => {
     });
 
     test('fetches and renders playlist, sets title', async () => {
-        // require the component after the mocks are set so the mocked API is used by the component
-        const PlaylistDetailPage = require('./PlaylistDetailPage.jsx').default;
+        // import the component after mocks are set so the mocked API is used by the component
+        const { default: PlaylistDetailPage } = await import('./PlaylistDetailPage.jsx');
 
         render(
             <MemoryRouter initialEntries={['/playlist/playlist1']}>
@@ -63,49 +63,38 @@ describe('PlaylistPage', () => {
 
         expect(document.title).toBe('Playlist playlist1');
         
-        // loading state
-        //expect(screen.getByRole('status')).toHaveTextContent(/loading playlist/i);
-
         // wait for loading to finish
         await waitFor(() => {
             expect(screen.queryByTestId('loading-indicator')).not.toBeInTheDocument();
         });
 
         // verify playlist content rendered
-        
-        // verify title rendered
         const heading = await screen.findByRole('heading', { level: 1, name: playlistData.name });
         expect(heading).toBeInTheDocument();
 
-        // verify cover image rendered
         const img = screen.getByAltText(`Cover of ${playlistData.name}`);
         expect(img).toHaveAttribute('src', playlistData.images[0].url); 
 
-        // verify description rendered
         const description = await screen.findByRole('heading', { level: 2, name: playlistData.description });
         expect(description).toBeInTheDocument();
 
-        // verify Spotify link rendered
         const link = screen.getByRole('link', { name: /spotify/i });
         expect(link).toHaveAttribute('href', playlistData.external_urls.spotify);
         expect(link).toHaveTextContent(/open in spotify/i);
 
-        // verify tracks rendered
         for (const track of playlistData.tracks.items) {
             expect(await screen.findByTestId(`track-item-${track.track.id}`)).toBeInTheDocument();
         }
 
-        // verify API called with correct params
-        await waitFor(() => {
-            expect(spotifyApi.fetchPlaylistById).toHaveBeenCalledTimes(1);
-            expect(spotifyApi.fetchPlaylistById).toHaveBeenCalledWith('test-token', 'playlist1');
-        });
+        // split assertions into separate waitFor calls to satisfy lint rules
+        await waitFor(() => expect(spotifyApi.fetchPlaylistById).toHaveBeenCalledTimes(1));
+        await waitFor(() => expect(spotifyApi.fetchPlaylistById).toHaveBeenCalledWith('test-token', 'playlist1'));
     });
 
     test('displays error message on fetch failure', async () => {
         spotifyApi.fetchPlaylistById.mockResolvedValue({ playlist: null, error: 'Failed to fetch playlist' });
 
-        const PlaylistDetailPage = require('./PlaylistDetailPage.jsx').default;
+        const { default: PlaylistDetailPage } = await import('./PlaylistDetailPage.jsx');
 
         render(
             <MemoryRouter initialEntries={['/playlist/playlist1']}>
@@ -115,12 +104,10 @@ describe('PlaylistPage', () => {
             </MemoryRouter>
         );
 
-        // wait for loading to finish
         await waitFor(() => {
             expect(screen.queryByTestId('loading-indicator')).not.toBeInTheDocument();
         });
 
-        // verify error message displayed
         const alert = await screen.findByRole('alert');
         expect(alert).toHaveTextContent('Failed to fetch playlist');
     });
@@ -128,7 +115,7 @@ describe('PlaylistPage', () => {
     test('displays error message on fetchPlaylistById failure', async () => {
         spotifyApi.fetchPlaylistById.mockRejectedValue(new Error('API error occurred'));
 
-        const PlaylistDetailPage = require('./PlaylistDetailPage.jsx').default;
+        const { default: PlaylistDetailPage } = await import('./PlaylistDetailPage.jsx');
 
         render(
             <MemoryRouter initialEntries={['/playlist/playlist1']}>
@@ -138,12 +125,10 @@ describe('PlaylistPage', () => {
             </MemoryRouter>
         );
 
-        // wait for loading to finish
         await waitFor(() => {
             expect(screen.queryByTestId('loading-indicator')).not.toBeInTheDocument();
         });
 
-        // verify error message displayed
         const alert = await screen.findByRole('alert');
         expect(alert).toHaveTextContent('API error occurred');
     });
