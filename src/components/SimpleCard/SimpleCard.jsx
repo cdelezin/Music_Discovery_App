@@ -1,4 +1,3 @@
-import React from 'react';
 import './SimpleCard.css';
 import PropTypes from 'prop-types';
 
@@ -11,7 +10,7 @@ const SimpleCard = ({ imageUrl, title, subtitle, link, linkUrl, size = 120 }) =>
   // prefer `link` (used by tests) but accept `linkUrl` as well
   const href = link || linkUrl || '#';
   return (
-    <a href={href} data-testid="link" className="simple-card">
+    <a href={href} data-testid="link" className="simple-card" aria-label={title}>
       <img
         src={imageUrl}
         alt={title}
